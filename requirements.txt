@@ -3,3 +3,7 @@ pandas
 matplotlib
 tensorflow
 scikit-learn
+gensim
+googletrans
+langdetect
+nltk
