@@ -384,6 +384,35 @@ X_with_stopwords = loaded_df['cleaned_review_translated_with_stopwords']
 X_without_stopwords = loaded_df['cleaned_review_translated_without_stopwords']
 y = loaded_df['sentiment']
 
+"""##**VISUALIZATIONS AND DATA SPLITTING**"""
+
+# Visualization 1: Sentiment Distribution
+plt.figure(figsize=(6, 4))
+sns.countplot(x=loaded_df['sentiment'])
+plt.title('Distribution of Sentiment')
+plt.xlabel('Sentiment (0: Bad, 1: Good)')
+plt.ylabel('Number of Reviews')
+plt.xticks([0, 1], ['Bad', 'Good']) # Label the x-axis ticks
+plt.show()
+
+# Review Length Distribution (with stopwords)
+review_lengths_with = loaded_df['cleaned_review_translated_with_stopwords'].str.split().apply(len)
+plt.figure(figsize=(8, 5))
+sns.histplot(review_lengths_with, bins=50, kde=True)
+plt.title('Distribution of Review Lengths (with Stopwords)')
+plt.xlabel('Review Length (Number of Words)')
+plt.ylabel('Frequency')
+plt.show()
+
+# You could also plot the distribution for reviews without stopwords if you want to compare
+review_lengths_without = loaded_df['cleaned_review_translated_without_stopwords'].str.split().apply(len)
+plt.figure(figsize=(8, 5))
+sns.histplot(review_lengths_without, bins=50, kde=True, color='orange')
+plt.title('Distribution of Review Lengths (without Stopwords)')
+plt.xlabel('Review Length (Number of Words)')
+plt.ylabel('Frequency')
+plt.show()
+
 # 2. Split the data into training and testing sets (80% train, 20% test)
 X_train_with, X_test_with, y_train, y_test = train_test_split(
     X_with_stopwords, y, test_size=0.2, random_state=42, stratify=y
@@ -414,7 +443,7 @@ print("Accuracy:", accuracy_score(y_test, y_pred_with))
 print("\nClassification Report:")
 print(classification_report(y_test, y_pred_with, target_names=['Bad', 'Good']))
 
-# --- Visualize the Confusion Matrix ---
+# Visualize the Confusion Matrix
 
 # Calculate the confusion matrix
 cm = confusion_matrix(y_test, y_pred_with)
@@ -442,7 +471,7 @@ tfidf_vectorizer_without = TfidfVectorizer(
 X_train_without_tfidf = tfidf_vectorizer_without.fit_transform(X_train_without)
 X_test_without_tfidf = tfidf_vectorizer_without.transform(X_test_without)
 
-# 5. Make predictions
+# Make predictions
 # Model for data without stopwords
 model_without_stopwords = LogisticRegression(max_iter=1000, random_state=42)
 model_without_stopwords.fit(X_train_without_tfidf, y_train)
@@ -453,7 +482,7 @@ print("Accuracy:", accuracy_score(y_test, y_pred_without))
 print("\nClassification Report:")
 print(classification_report(y_test, y_pred_without, target_names=['Bad', 'Good']))
 
-# --- Visualize the Confusion Matrix ---
+# Visualize the Confusion Matrix
 
 # Calculate the confusion matrix
 cm_without = confusion_matrix(y_test, y_pred_without)
@@ -489,6 +518,49 @@ for idx in top_positive_indices:
 print("\n--- Top 10 Features for Negative Sentiment (With Stopwords) ---")
 for idx in top_negative_indices:
     print(f"{feature_names[idx]}: {coef[idx]:.4f}")
+
+if 'tfidf_vectorizer' in globals(): # Check if the vectorizer exists
+    # Get feature names (n-grams)
+    feature_names = tfidf_vectorizer.get_feature_names_out()
+
+    # Get TF-IDF vectors for good and bad sentiment reviews
+    X_tfidf = tfidf_vectorizer.transform(loaded_df['cleaned_review_translated_with_stopwords'])
+    X_tfidf_bad = X_tfidf[loaded_df['sentiment'] == 0]
+    X_tfidf_good = X_tfidf[loaded_df['sentiment'] == 1]
+
+    # Calculate average TF-IDF scores for each n-gram per sentiment
+    avg_tfidf_bad = np.mean(X_tfidf_bad.toarray(), axis=0)
+    avg_tfidf_good = np.mean(X_tfidf_good.toarray(), axis=0)
+
+    # Get top n-grams for bad sentiment
+    top_n_bad_indices = np.argsort(avg_tfidf_bad)[::-1][:15] # Top 15
+    top_n_bad_names = [feature_names[i] for i in top_n_bad_indices]
+    top_n_bad_scores = avg_tfidf_bad[top_n_bad_indices]
+
+    # Get top n-grams for good sentiment
+    top_n_good_indices = np.argsort(avg_tfidf_good)[::-1][:15] # Top 15
+    top_n_good_names = [feature_names[i] for i in top_n_good_indices]
+    top_n_good_scores = avg_tfidf_good[top_n_good_indices]
+
+    # Plotting
+    plt.figure(figsize=(12, 6))
+
+    plt.subplot(1, 2, 1)
+    sns.barplot(x=top_n_bad_scores, y=top_n_bad_names, palette='Reds_d')
+    plt.title('Top 15 N-grams for Bad Sentiment (Avg TF-IDF)')
+    plt.xlabel('Average TF-IDF Score')
+    plt.ylabel('N-gram')
+
+    plt.subplot(1, 2, 2)
+    sns.barplot(x=top_n_good_scores, y=top_n_good_names, palette='Greens_d')
+    plt.title('Top 15 N-grams for Good Sentiment (Avg TF-IDF)')
+    plt.xlabel('Average TF-IDF Score')
+    plt.ylabel('N-gram')
+
+    plt.tight_layout()
+    plt.show()
+else:
+    print("TF-IDF vectorizer not found. Please run the TF-IDF vectorization cell first to generate this plot.")
 
 """**In conclusion both the models i.e. one suing stop words and the other not using stop words are not to different from each other i.e. thier differences is just small in from the experiments done but the model that used stop words overall showed more performance to the model that had no stop words in it**
 
