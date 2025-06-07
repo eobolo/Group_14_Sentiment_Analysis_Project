@@ -26,10 +26,8 @@ The GitHub repository is well-structured with a `README.md` explaining the proje
 <pre> <code> Group_14_Sentiment_Analysis_Project/
   ├── datasets/ 
   ├── notebooks/ 
-  ├── models/ 
-  ├── outputs/
+  ├── models/
   ├── report/
-  ├── requirements.txt 
   └── README.md
 </pre>
 ---
